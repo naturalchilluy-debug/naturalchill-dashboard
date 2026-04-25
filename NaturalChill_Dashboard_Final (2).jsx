@@ -1,0 +1,719 @@
+import { useState, useEffect, useCallback } from "react";
+
+// ═══════════════════════════════════════════════════════════════
+//  NATURAL CHILL — DASHBOARD CON GOOGLE SHEETS SYNC
+//  Cambiá SCRIPT_URL por la URL de tu Apps Script desplegado
+// ═══════════════════════════════════════════════════════════════
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKtlpPlJ33cYFj9h7sArt4AUKUmsseIwjuxGIAJsB69VlihvonKDSgFy17qd0XnA8X/exec"; // ← REEMPLAZAR después de desplegar
+
+// ─── PRODUCTOS (65 reales de NaturalChill_v4_Final_1.xlsx) ──────
+const PRODUCTOS = [
+  { cod:"P001",producto:"Almendras Naturales",presentacion:"1 kg",categoria:"Frutos Secos",costo:486.38,precio:750 },
+  { cod:"P002",producto:"Almendras Naturales",presentacion:"500 g",categoria:"Frutos Secos",costo:250.19,precio:420 },
+  { cod:"P003",producto:"Almendras Naturales",presentacion:"250 g",categoria:"Frutos Secos",costo:132.1,precio:300 },
+  { cod:"P004",producto:"Castañas Tostadas",presentacion:"1 kg",categoria:"Frutos Secos",costo:453.2,precio:799 },
+  { cod:"P005",producto:"Castañas Tostadas",presentacion:"500 g",categoria:"Frutos Secos",costo:233.6,precio:488 },
+  { cod:"P006",producto:"Castañas Tostadas",presentacion:"250 g",categoria:"Frutos Secos",costo:123.8,precio:311 },
+  { cod:"P007",producto:"Maní Tostado",presentacion:"1 kg",categoria:"Frutos Secos",costo:111.6,precio:250 },
+  { cod:"P008",producto:"Maní Tostado",presentacion:"500 g",categoria:"Frutos Secos",costo:62.8,precio:159 },
+  { cod:"P009",producto:"Maní Tostado",presentacion:"250 g",categoria:"Frutos Secos",costo:38.4,precio:80 },
+  { cod:"P010",producto:"Nueces Cuartos",presentacion:"1 kg",categoria:"Frutos Secos",costo:414.16,precio:750 },
+  { cod:"P011",producto:"Nueces Cuartos",presentacion:"500 g",categoria:"Frutos Secos",costo:214.08,precio:420 },
+  { cod:"P012",producto:"Nueces Cuartos",presentacion:"250 g",categoria:"Frutos Secos",costo:115.99,precio:300 },
+  { cod:"P013",producto:"Pasas de Uva Jumbo",presentacion:"1 kg",categoria:"Frutas Secas",costo:158.45,precio:329 },
+  { cod:"P014",producto:"Pasas de Uva Jumbo",presentacion:"500 g",categoria:"Frutas Secas",costo:86.22,precio:199 },
+  { cod:"P015",producto:"Pasas de Uva Jumbo",presentacion:"250 g",categoria:"Frutas Secas",costo:50.11,precio:129 },
+  { cod:"P016",producto:"Pasas de Uva Mediana",presentacion:"1 kg",categoria:"Frutas Secas",costo:165.77,precio:289 },
+  { cod:"P017",producto:"Pasas de Uva Mediana",presentacion:"500 g",categoria:"Frutas Secas",costo:89.88,precio:173 },
+  { cod:"P018",producto:"Pasas de Uva Mediana",presentacion:"250 g",categoria:"Frutas Secas",costo:51.94,precio:115 },
+  { cod:"P019",producto:"Ciruelas sin carozo",presentacion:"1 kg",categoria:"Frutas Secas",costo:233.6,precio:320 },
+  { cod:"P020",producto:"Ciruelas sin carozo",presentacion:"500 g",categoria:"Frutas Secas",costo:123.8,precio:179 },
+  { cod:"P021",producto:"Ciruelas sin carozo",presentacion:"250 g",categoria:"Frutas Secas",costo:68.9,precio:99 },
+  { cod:"P022",producto:"Pistachos cáscara",presentacion:"1 kg",categoria:"Pistachos",costo:984,precio:1250 },
+  { cod:"P023",producto:"Pistachos cáscara",presentacion:"500 g",categoria:"Pistachos",costo:492,precio:700 },
+  { cod:"P024",producto:"Pistachos pelados naturales",presentacion:"1 kg",categoria:"Pistachos",costo:1600,precio:2250 },
+  { cod:"P025",producto:"Pistachos pelados naturales",presentacion:"500 g",categoria:"Pistachos",costo:807,precio:1200 },
+  { cod:"P026",producto:"Pistachos pelados naturales",presentacion:"250 g",categoria:"Pistachos",costo:410.5,precio:700 },
+  { cod:"P027",producto:"Pistachos pelados tostados",presentacion:"1 kg",categoria:"Pistachos",costo:1600,precio:2500 },
+  { cod:"P028",producto:"Pistachos pelados tostados",presentacion:"500 g",categoria:"Pistachos",costo:807,precio:1300 },
+  { cod:"P029",producto:"Pistachos pelados tostados",presentacion:"250 g",categoria:"Pistachos",costo:410.5,precio:800 },
+  { cod:"P030",producto:"Mix Clásico",presentacion:"1 kg",categoria:"Mix / Combinados",costo:388,precio:570 },
+  { cod:"P031",producto:"Mix Clásico",presentacion:"500 g",categoria:"Mix / Combinados",costo:215,precio:310 },
+  { cod:"P032",producto:"Mix Clásico",presentacion:"250 g",categoria:"Mix / Combinados",costo:124,precio:177 },
+  { cod:"P033",producto:"Mix Tradicional",presentacion:"1 kg",categoria:"Mix / Combinados",costo:426,precio:630 },
+  { cod:"P034",producto:"Mix Tradicional",presentacion:"500 g",categoria:"Mix / Combinados",costo:236,precio:340 },
+  { cod:"P035",producto:"Mix Tradicional",presentacion:"250 g",categoria:"Mix / Combinados",costo:136,precio:193 },
+  { cod:"P036",producto:"Mix Esencial",presentacion:"1 kg",categoria:"Mix / Combinados",costo:449,precio:710 },
+  { cod:"P037",producto:"Mix Esencial",presentacion:"500 g",categoria:"Mix / Combinados",costo:245,precio:380 },
+  { cod:"P038",producto:"Mix Esencial",presentacion:"250 g",categoria:"Mix / Combinados",costo:140,precio:210 },
+  { cod:"P039",producto:"Mix Power",presentacion:"1 kg",categoria:"Mix / Combinados",costo:567,precio:790 },
+  { cod:"P040",producto:"Mix Power",presentacion:"500 g",categoria:"Mix / Combinados",costo:304,precio:450 },
+  { cod:"P041",producto:"Mix Power",presentacion:"250 g",categoria:"Mix / Combinados",costo:169,precio:240 },
+  { cod:"P042",producto:"Granola Premium",presentacion:"400 g",categoria:"Granola",costo:184,precio:329 },
+  { cod:"P043",producto:"Granola Clásica",presentacion:"400 g",categoria:"Granola",costo:129,precio:219 },
+  { cod:"P044",producto:"Chía",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:254,precio:359 },
+  { cod:"P045",producto:"Chía",presentacion:"500 g",categoria:"Semillas y Cereales",costo:134,precio:195 },
+  { cod:"P046",producto:"Chía",presentacion:"250 g",categoria:"Semillas y Cereales",costo:74,precio:102 },
+  { cod:"P047",producto:"Lino",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:114,precio:169 },
+  { cod:"P048",producto:"Lino",presentacion:"500 g",categoria:"Semillas y Cereales",costo:64,precio:99 },
+  { cod:"P049",producto:"Lino",presentacion:"250 g",categoria:"Semillas y Cereales",costo:39,precio:57 },
+  { cod:"P050",producto:"Girasol",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:148,precio:249 },
+  { cod:"P051",producto:"Girasol",presentacion:"500 g",categoria:"Semillas y Cereales",costo:84,precio:150 },
+  { cod:"P052",producto:"Girasol",presentacion:"250 g",categoria:"Semillas y Cereales",costo:49,precio:88 },
+  { cod:"P053",producto:"Sésamo",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:169,precio:259 },
+  { cod:"P054",producto:"Sésamo",presentacion:"500 g",categoria:"Semillas y Cereales",costo:94,precio:149 },
+  { cod:"P055",producto:"Sésamo",presentacion:"250 g",categoria:"Semillas y Cereales",costo:54,precio:77 },
+  { cod:"P056",producto:"Zapallo",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:420,precio:699 },
+  { cod:"P057",producto:"Zapallo",presentacion:"500 g",categoria:"Semillas y Cereales",costo:224,precio:368 },
+  { cod:"P058",producto:"Zapallo",presentacion:"250 g",categoria:"Semillas y Cereales",costo:119,precio:203 },
+  { cod:"P059",producto:"Coco rallado",presentacion:"1 kg",categoria:"Frutas Secas",costo:342,precio:684 },
+  { cod:"P060",producto:"Coco rallado",presentacion:"500 g",categoria:"Frutas Secas",costo:178,precio:400 },
+  { cod:"P061",producto:"Crema de Maní Clásica",presentacion:"320 g",categoria:"Frutos Secos",costo:160,precio:220 },
+  { cod:"P062",producto:"Crema de Maní Estilo Americano",presentacion:"320 g",categoria:"Frutos Secos",costo:160,precio:230 },
+  { cod:"P063",producto:"Crema de Maní Crocante",presentacion:"320 g",categoria:"Frutos Secos",costo:160,precio:250 },
+  { cod:"P064",producto:"Miel Orgánica",presentacion:"1 kg",categoria:"Otros",costo:205,precio:270 },
+  { cod:"P065",producto:"Miel Orgánica",presentacion:"400 g",categoria:"Otros",costo:130,precio:160 },
+];
+
+const FORMAS_PAGO = ["Efectivo","Transferencia","MercadoPago","Tarjeta débito","Tarjeta crédito"];
+const TIER_CONFIG = [
+  { name:"Nuevo",  min:0,  max:1,        color:"#9FAB86", badge:"🌱" },
+  { name:"Chill",  min:2,  max:4,        color:"#586844", badge:"⭐" },
+  { name:"Premium",min:5,  max:9,        color:"#3d5c2a", badge:"💎" },
+  { name:"VIP",    min:10, max:Infinity, color:"#222824", badge:"👑" },
+];
+
+const getTier = (n) => TIER_CONFIG.find(t=>n>=t.min&&n<=t.max)||TIER_CONFIG[0];
+const fmt = (n) => "$ "+Math.round(n).toLocaleString("es-UY");
+const pct = (n) => (n*100).toFixed(1)+"%";
+
+// ─── API SHEETS (CORS fix para Google Apps Script) ──────────────
+async function sheetsPost(action, extra={}) {
+  // Usamos GET con parámetros para evitar CORS preflight
+  const params = new URLSearchParams({ action, data: JSON.stringify(extra) });
+  const r = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method:"GET" });
+  return r.json();
+}
+
+async function sheetsGet(action) {
+  const r = await fetch(`${SCRIPT_URL}?action=${action}`, { method:"GET" });
+  return r.json();
+}
+
+// ─── ESTILOS ────────────────────────────────────────────────────
+const S = {
+  app:      { fontFamily:"'Poppins',sans-serif", background:"#F7F8F5", minHeight:"100vh", color:"#222824" },
+  header:   { background:"#222824", padding:"16px 24px", display:"flex", alignItems:"center", gap:12, borderBottom:"3px solid #586844" },
+  logo:     { color:"#9FAB86", fontWeight:600, fontSize:18, letterSpacing:1 },
+  logoSub:  { color:"rgba(159,171,134,0.6)", fontSize:11, letterSpacing:2, textTransform:"uppercase" },
+  nav:      { display:"flex", gap:4, marginLeft:"auto", flexWrap:"wrap" },
+  navBtn:   (a) => ({ padding:"8px 14px", borderRadius:8, border:"none", cursor:"pointer", fontSize:12,
+    fontFamily:"'Poppins',sans-serif", fontWeight:500, letterSpacing:0.5, textTransform:"uppercase", transition:"all 0.2s",
+    background:a?"#586844":"transparent", color:a?"#fff":"#9FAB86" }),
+  card:     { background:"#fff", borderRadius:16, padding:20, boxShadow:"0 2px 12px rgba(34,40,36,0.08)" },
+  label:    { fontSize:11, fontWeight:600, letterSpacing:1.5, textTransform:"uppercase", color:"#9FAB86", marginBottom:4, display:"block" },
+  input:    { width:"100%", padding:"10px 14px", borderRadius:10, border:"1.5px solid #e0e5da",
+    fontFamily:"'Poppins',sans-serif", fontSize:13, color:"#222824", background:"#fff", boxSizing:"border-box", outline:"none" },
+  select:   { width:"100%", padding:"10px 14px", borderRadius:10, border:"1.5px solid #e0e5da",
+    fontFamily:"'Poppins',sans-serif", fontSize:13, color:"#222824", background:"#fff", boxSizing:"border-box", outline:"none" },
+  btnPrimary:   { background:"#586844", color:"#fff", border:"none", borderRadius:10, padding:"11px 22px",
+    fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:13, cursor:"pointer" },
+  btnDanger:    { background:"#fee2e2", color:"#dc2626", border:"none", borderRadius:8, padding:"6px 12px",
+    fontFamily:"'Poppins',sans-serif", fontWeight:600, fontSize:12, cursor:"pointer" },
+  statCard: (c) => ({ background:"#fff", borderRadius:16, padding:"20px 24px",
+    boxShadow:"0 2px 12px rgba(34,40,36,0.08)", borderLeft:`4px solid ${c}` }),
+  badge:    (c) => ({ background:c+"22", color:c, borderRadius:20, padding:"2px 10px", fontSize:11, fontWeight:600 }),
+};
+
+// ─── TOAST ──────────────────────────────────────────────────────
+function Toast({msg,tipo}){
+  if(!msg) return null;
+  const bg = tipo==="error"?"#dc2626":tipo==="warn"?"#f59e0b":"#586844";
+  return(
+    <div style={{position:"fixed",bottom:24,right:24,background:bg,color:"#fff",padding:"12px 20px",
+      borderRadius:12,fontWeight:600,fontSize:13,zIndex:9999,boxShadow:"0 4px 20px rgba(0,0,0,0.2)"}}>
+      {msg}
+    </div>
+  );
+}
+
+// ─── BANNER CONFIGURACIÓN ───────────────────────────────────────
+function BannerConfig(){
+  if(SCRIPT_URL !== "TU_APPS_SCRIPT_URL_ACÁ") return null;
+  return(
+    <div style={{background:"#fff3cd",border:"1px solid #f59e0b",borderRadius:12,padding:16,margin:"0 0 20px",fontSize:13}}>
+      <strong>⚙️ Configuración pendiente:</strong> Reemplazá <code>SCRIPT_URL</code> con la URL de tu Apps Script desplegado.
+      Seguí los pasos del archivo <code>NaturalChill_AppsScript.js</code>.
+      <br/>Por ahora los datos se guardan solo localmente.
+    </div>
+  );
+}
+
+// ─── NUEVO PEDIDO ───────────────────────────────────────────────
+function NuevoPedido({onGuardar,clientes,syncing}){
+  const [clienteMode,setClienteMode]=useState("nuevo");
+  const [nombre,setNombre]=useState("");
+  const [telefono,setTelefono]=useState("");
+  const [clienteExId,setClienteExId]=useState("");
+  const [items,setItems]=useState([]);
+  const [formaPago,setFormaPago]=useState("Transferencia");
+  const [descuento,setDescuento]=useState(0);
+  const [notas,setNotas]=useState("");
+  const [busqueda,setBusqueda]=useState("");
+  const [filtroCategoria,setFiltroCategoria]=useState("Todas");
+
+  const categorias=["Todas",...new Set(PRODUCTOS.map(p=>p.categoria))];
+  const productosFiltrados=PRODUCTOS.filter(p=>{
+    const matchCat=filtroCategoria==="Todas"||p.categoria===filtroCategoria;
+    const matchBusq=!busqueda||p.producto.toLowerCase().includes(busqueda.toLowerCase())||p.presentacion.includes(busqueda);
+    return matchCat&&matchBusq;
+  });
+
+  const addItem=(prod)=>{
+    const exists=items.find(i=>i.cod===prod.cod);
+    if(exists) setItems(items.map(i=>i.cod===prod.cod?{...i,qty:i.qty+1}:i));
+    else setItems([...items,{...prod,qty:1,precioFinal:prod.precio}]);
+  };
+  const removeItem=(cod)=>setItems(items.filter(i=>i.cod!==cod));
+  const updateQty=(cod,q)=>{ if(q<1){removeItem(cod);return;} setItems(items.map(i=>i.cod===cod?{...i,qty:q}:i)); };
+  const updatePrecio=(cod,p)=>setItems(items.map(i=>i.cod===cod?{...i,precioFinal:Number(p)}:i));
+
+  const subtotal=items.reduce((s,i)=>s+i.precioFinal*i.qty,0);
+  const costoTotal=items.reduce((s,i)=>s+i.costo*i.qty,0);
+  const descuentoMonto=subtotal*(descuento/100);
+  const total=subtotal-descuentoMonto;
+  const ganancia=total-costoTotal;
+  const margen=total>0?ganancia/total:0;
+
+  const clienteSeleccionado=clientes.find(c=>c.id===clienteExId);
+
+  const handleGuardar=()=>{
+    if(items.length===0){alert("Agregá al menos un producto");return;}
+    const clienteNombre=clienteMode==="nuevo"?nombre:clienteSeleccionado?.nombre||"";
+    const clienteTelefono=clienteMode==="nuevo"?telefono:clienteSeleccionado?.telefono||"";
+    if(!clienteNombre.trim()){alert("Ingresá el nombre del cliente");return;}
+    onGuardar({
+      id:Date.now(), fecha:new Date().toISOString(),
+      clienteNombre, clienteTelefono,
+      esClienteNuevo:clienteMode==="nuevo",
+      clienteId:clienteMode==="nuevo"?null:clienteExId,
+      items, subtotal, descuentoPct:descuento, descuentoMonto,
+      total, costoTotal, ganancia, margen, formaPago, notas
+    });
+    setItems([]); setNombre(""); setTelefono(""); setDescuento(0); setNotas(""); setBusqueda("");
+  };
+
+  return(
+    <div style={{display:"grid",gridTemplateColumns:"1fr 360px",gap:20,alignItems:"start"}}>
+      <div style={{display:"flex",flexDirection:"column",gap:16}}>
+
+        {/* Cliente */}
+        <div style={S.card}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+            <span>👤</span><strong style={{fontSize:14}}>Cliente</strong>
+          </div>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            {["nuevo","existente"].map(m=>(
+              <button key={m} style={{...S.btnPrimary,padding:"8px 16px",fontSize:12,
+                background:clienteMode===m?"#586844":"#e8ede4",color:clienteMode===m?"#fff":"#586844"}}
+                onClick={()=>setClienteMode(m)}>{m==="nuevo"?"Nuevo":"Existente"}</button>
+            ))}
+          </div>
+          {clienteMode==="nuevo"?(
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div><span style={S.label}>Nombre</span>
+                <input style={S.input} value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej: María García"/></div>
+              <div><span style={S.label}>Teléfono</span>
+                <input style={S.input} value={telefono} onChange={e=>setTelefono(e.target.value)} placeholder="09X XXX XXX"/></div>
+            </div>
+          ):(
+            <select style={S.select} value={clienteExId} onChange={e=>setClienteExId(e.target.value)}>
+              <option value="">— Seleccioná cliente —</option>
+              {clientes.map(c=>{
+                const tier=getTier(c.totalPedidos);
+                return <option key={c.id} value={c.id}>{tier.badge} {c.nombre} · {c.totalPedidos} pedidos</option>;
+              })}
+            </select>
+          )}
+        </div>
+
+        {/* Buscador productos */}
+        <div style={S.card}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+            <span>🛒</span><strong style={{fontSize:14}}>Agregar productos</strong>
+          </div>
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <input style={{...S.input,flex:1}} placeholder="Buscar..." value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
+            <select style={{...S.select,width:180}} value={filtroCategoria} onChange={e=>setFiltroCategoria(e.target.value)}>
+              {categorias.map(c=><option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div style={{maxHeight:320,overflowY:"auto",display:"flex",flexDirection:"column",gap:3}}>
+            {productosFiltrados.map(p=>{
+              const enPedido=items.find(i=>i.cod===p.cod);
+              return(
+                <div key={p.cod} onClick={()=>addItem(p)} style={{display:"flex",alignItems:"center",padding:"9px 12px",
+                  borderRadius:10,background:enPedido?"#f0f5ed":"#f9faf8",
+                  border:`1px solid ${enPedido?"#9FAB86":"#e8ede4"}`,cursor:"pointer"}}>
+                  <div style={{flex:1}}>
+                    <span style={{fontWeight:500,fontSize:13}}>{p.producto}</span>
+                    <span style={{fontSize:11,color:"#9FAB86",marginLeft:8}}>{p.presentacion}</span>
+                  </div>
+                  <div style={{textAlign:"right",marginRight:12}}>
+                    <div style={{fontWeight:700,fontSize:13,color:"#586844"}}>{fmt(p.precio)}</div>
+                    <div style={{fontSize:10,color:"#aaa"}}>costo {fmt(p.costo)}</div>
+                  </div>
+                  <div style={{width:24,height:24,borderRadius:6,background:enPedido?"#586844":"#e8ede4",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    color:enPedido?"#fff":"#586844",fontWeight:700,fontSize:13}}>
+                    {enPedido?enPedido.qty:"+"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Items seleccionados */}
+        {items.length>0&&(
+          <div style={S.card}>
+            <strong style={{fontSize:14,display:"block",marginBottom:12}}>📦 Ítems del pedido</strong>
+            {items.map(item=>(
+              <div key={item.cod} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",borderBottom:"1px solid #f5f5f5"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:500,fontSize:13}}>{item.producto} <span style={{color:"#9FAB86",fontSize:11}}>{item.presentacion}</span></div>
+                  <div style={{fontSize:10,color:"#aaa"}}>costo {fmt(item.costo)}/u</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:5}}>
+                  <button style={{width:26,height:26,borderRadius:6,border:"1px solid #ddd",background:"#fff",cursor:"pointer",fontWeight:700,color:"#586844"}}
+                    onClick={()=>updateQty(item.cod,item.qty-1)}>−</button>
+                  <span style={{width:22,textAlign:"center",fontWeight:700,fontSize:13}}>{item.qty}</span>
+                  <button style={{width:26,height:26,borderRadius:6,border:"1px solid #ddd",background:"#fff",cursor:"pointer",fontWeight:700,color:"#586844"}}
+                    onClick={()=>updateQty(item.cod,item.qty+1)}>+</button>
+                </div>
+                <input style={{...S.input,width:85,textAlign:"right",fontWeight:700,padding:"6px 10px"}}
+                  type="number" value={item.precioFinal} onChange={e=>updatePrecio(item.cod,e.target.value)}/>
+                <button style={S.btnDanger} onClick={()=>removeItem(item.cod)}>✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Panel resumen */}
+      <div style={{display:"flex",flexDirection:"column",gap:16,position:"sticky",top:20}}>
+        <div style={S.card}>
+          <strong style={{fontSize:14,display:"block",marginBottom:16}}>💰 Resumen</strong>
+          <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:16}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:13}}>
+              <span style={{color:"#666"}}>Subtotal</span><strong>{fmt(subtotal)}</strong>
+            </div>
+            <div>
+              <span style={S.label}>Descuento %</span>
+              <input style={{...S.input,textAlign:"right"}} type="number" min="0" max="50"
+                value={descuento} onChange={e=>setDescuento(Number(e.target.value))}/>
+              {descuento>0&&<div style={{fontSize:11,color:"#dc2626",textAlign:"right",marginTop:2}}>− {fmt(descuentoMonto)}</div>}
+            </div>
+            <div style={{height:1,background:"#f0f0f0"}}/>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:16}}>
+              <strong>Total</strong>
+              <strong style={{color:"#586844"}}>{fmt(total)}</strong>
+            </div>
+          </div>
+
+          {/* Rentabilidad */}
+          <div style={{background:"#f7faf4",borderRadius:12,padding:14,marginBottom:16}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:1,textTransform:"uppercase",color:"#9FAB86",marginBottom:8}}>Rentabilidad</div>
+            {[
+              {label:"Costo total",val:fmt(costoTotal),color:"#dc2626"},
+              {label:"Ganancia bruta",val:fmt(ganancia),color:"#586844"},
+              {label:"Margen",val:pct(margen),color:margen>=0.5?"#22c55e":margen>=0.35?"#f59e0b":"#dc2626"},
+            ].map(r=>(
+              <div key={r.label} style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+                <span style={{color:"#666"}}>{r.label}</span>
+                <strong style={{color:r.color}}>{r.val}</strong>
+              </div>
+            ))}
+            <div style={{height:5,background:"#e8ede4",borderRadius:3,marginTop:8}}>
+              <div style={{width:`${Math.min(margen*100,100)}%`,height:"100%",borderRadius:3,transition:"width 0.3s",
+                background:margen>=0.5?"#22c55e":margen>=0.35?"#f59e0b":"#dc2626"}}/>
+            </div>
+          </div>
+
+          <div style={{marginBottom:12}}>
+            <span style={S.label}>Forma de pago</span>
+            <select style={S.select} value={formaPago} onChange={e=>setFormaPago(e.target.value)}>
+              {FORMAS_PAGO.map(f=><option key={f}>{f}</option>)}
+            </select>
+          </div>
+          <div style={{marginBottom:16}}>
+            <span style={S.label}>Notas</span>
+            <textarea style={{...S.input,resize:"vertical",minHeight:56}} value={notas}
+              onChange={e=>setNotas(e.target.value)} placeholder="Observaciones..."/>
+          </div>
+
+          <button style={{...S.btnPrimary,width:"100%",padding:13,fontSize:14,opacity:syncing?0.7:1}}
+            onClick={handleGuardar} disabled={syncing}>
+            {syncing?"⏳ Guardando...":"✓ Confirmar pedido"}
+          </button>
+        </div>
+
+        {items.length>0&&margen<0.35&&(
+          <div style={{background:"#fff8ed",borderRadius:12,padding:14,border:"1px solid #f59e0b"}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#f59e0b",marginBottom:4}}>⚠️ MARGEN BAJO</div>
+            <div style={{fontSize:12,color:"#666"}}>Margen menor al 35%. Revisá precios o descuentos.</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── HISTORIAL ──────────────────────────────────────────────────
+function Historial({pedidos,onEliminar,loading}){
+  const [filtro,setFiltro]=useState("");
+  const filtrados=pedidos
+    .filter(p=>p.clienteNombre?.toLowerCase().includes(filtro.toLowerCase())||p.formaPago?.toLowerCase().includes(filtro.toLowerCase()))
+    .sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+
+  if(loading) return <div style={{...S.card,textAlign:"center",padding:40,color:"#aaa"}}>⏳ Cargando pedidos...</div>;
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={S.card}>
+        <input style={S.input} placeholder="Buscar por cliente o forma de pago..." value={filtro} onChange={e=>setFiltro(e.target.value)}/>
+      </div>
+      {filtrados.length===0&&<div style={{...S.card,textAlign:"center",color:"#aaa",padding:40}}>No hay pedidos aún.</div>}
+      {filtrados.map(p=>{
+        const mc=p.margen>=0.5?"#22c55e":p.margen>=0.35?"#f59e0b":"#dc2626";
+        const fecha=new Date(p.fecha);
+        return(
+          <div key={p.id} style={{...S.card,borderLeft:`4px solid ${mc}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+              <div>
+                <strong style={{fontSize:15}}>{p.clienteNombre}</strong>
+                {p.clienteTelefono&&(
+                  <a href={`https://wa.me/598${p.clienteTelefono.replace(/\D/g,'')}`} target="_blank" rel="noreferrer"
+                    style={{marginLeft:10,fontSize:12,color:"#25D366",textDecoration:"none"}}>
+                    📱 WA
+                  </a>
+                )}
+                <div style={{fontSize:11,color:"#aaa",marginTop:2}}>
+                  {isNaN(fecha)?String(p.fecha):fecha.toLocaleDateString("es-UY",{day:"2-digit",month:"short",year:"numeric"})}
+                </div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:18,fontWeight:700,color:"#586844"}}>{fmt(p.total)}</div>
+                <div style={{fontSize:12,color:"#aaa"}}>{p.formaPago}</div>
+              </div>
+            </div>
+            {p.items&&(
+              <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
+                {p.items.map((i,idx)=>(
+                  <span key={idx} style={{background:"#f0f5ed",borderRadius:20,padding:"2px 10px",fontSize:11,color:"#586844"}}>
+                    {i.qty}× {i.producto} {i.presentacion}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div style={{display:"flex",gap:16,fontSize:12,color:"#666",borderTop:"1px solid #f5f5f5",paddingTop:10,flexWrap:"wrap"}}>
+              <span>Costo: <strong style={{color:"#dc2626"}}>{fmt(p.costoTotal)}</strong></span>
+              <span>Ganancia: <strong style={{color:"#586844"}}>{fmt(p.ganancia)}</strong></span>
+              <span>Margen: <strong style={{color:mc}}>{pct(p.margen)}</strong></span>
+              {p.descuentoPct>0&&<span>Dto: <strong style={{color:"#f59e0b"}}>{p.descuentoPct}%</strong></span>}
+              <button style={{...S.btnDanger,marginLeft:"auto"}} onClick={()=>onEliminar(p.id)}>Eliminar</button>
+            </div>
+            {p.notas&&<div style={{fontSize:11,color:"#888",fontStyle:"italic",marginTop:8}}>💬 {p.notas}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── CLIENTES ───────────────────────────────────────────────────
+function Clientes({clientes,loading}){
+  const [busq,setBusq]=useState("");
+  const filtrados=clientes.filter(c=>c.nombre?.toLowerCase().includes(busq.toLowerCase())||c.telefono?.includes(busq));
+
+  if(loading) return <div style={{...S.card,textAlign:"center",padding:40,color:"#aaa"}}>⏳ Cargando clientes...</div>;
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={S.card}>
+        <input style={S.input} placeholder="Buscar cliente..." value={busq} onChange={e=>setBusq(e.target.value)}/>
+      </div>
+      {filtrados.length===0&&<div style={{...S.card,textAlign:"center",color:"#aaa",padding:40}}>Los clientes aparecen al registrar pedidos.</div>}
+      {[...filtrados].sort((a,b)=>b.totalComprado-a.totalComprado).map(c=>{
+        const tier=getTier(c.totalPedidos);
+        return(
+          <div key={c.id} style={{...S.card,borderLeft:`4px solid ${tier.color}`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <strong style={{fontSize:15}}>{c.nombre}</strong>
+                  <span style={S.badge(tier.color)}>{tier.badge} {tier.name}</span>
+                </div>
+                {c.telefono&&(
+                  <a href={`https://wa.me/598${c.telefono.replace(/\D/g,'')}`} target="_blank" rel="noreferrer"
+                    style={{fontSize:12,color:"#25D366",textDecoration:"none"}}>
+                    📱 {c.telefono}
+                  </a>
+                )}
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:20,fontWeight:700,color:"#586844"}}>{fmt(c.totalComprado)}</div>
+                <div style={{fontSize:11,color:"#aaa"}}>total comprado</div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:20,marginTop:12,paddingTop:12,borderTop:"1px solid #f5f5f5",fontSize:12,color:"#666",flexWrap:"wrap"}}>
+              <span>🛒 <strong>{c.totalPedidos}</strong> pedidos</span>
+              <span>💰 Ganancia: <strong style={{color:"#586844"}}>{fmt(c.totalGanancia)}</strong></span>
+              <span>🧾 Ticket prom: <strong>{fmt(c.ticketPromedio||c.totalComprado/Math.max(c.totalPedidos,1))}</strong></span>
+            </div>
+            {tier.max!==Infinity&&(
+              <div style={{marginTop:10}}>
+                <div style={{fontSize:10,color:"#aaa",marginBottom:2}}>
+                  → {TIER_CONFIG[TIER_CONFIG.indexOf(tier)+1]?.name}: {c.totalPedidos}/{tier.max+1} pedidos
+                </div>
+                <div style={{height:4,background:"#f0f0f0",borderRadius:2}}>
+                  <div style={{width:`${Math.min(((c.totalPedidos-tier.min)/(tier.max-tier.min+1))*100,100)}%`,
+                    height:"100%",background:tier.color,borderRadius:2,transition:"width 0.5s"}}/>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── DASHBOARD ──────────────────────────────────────────────────
+function Dashboard({pedidos,clientes}){
+  const totalVentas=pedidos.reduce((s,p)=>s+Number(p.total),0);
+  const totalGanancia=pedidos.reduce((s,p)=>s+Number(p.ganancia),0);
+  const margenProm=totalVentas>0?totalGanancia/totalVentas:0;
+  const ticketProm=pedidos.length>0?totalVentas/pedidos.length:0;
+
+  const porFormaPago={};
+  pedidos.forEach(p=>{porFormaPago[p.formaPago]=(porFormaPago[p.formaPago]||0)+Number(p.total);});
+
+  const prodVendidos={};
+  pedidos.forEach(p=>p.items?.forEach(i=>{
+    const k=`${i.producto} ${i.presentacion}`;
+    if(!prodVendidos[k]) prodVendidos[k]={nombre:k,qty:0,revenue:0,ganancia:0};
+    prodVendidos[k].qty+=Number(i.qty);
+    prodVendidos[k].revenue+=Number(i.precioFinal)*Number(i.qty);
+    prodVendidos[k].ganancia+=(Number(i.precioFinal)-Number(i.costo))*Number(i.qty);
+  }));
+  const topProds=Object.values(prodVendidos).sort((a,b)=>b.revenue-a.revenue).slice(0,8);
+
+  const tierCount={};
+  clientes.forEach(c=>{ const t=getTier(c.totalPedidos).name; tierCount[t]=(tierCount[t]||0)+1; });
+
+  const ahora=Date.now();
+  const hace7=ahora-7*24*3600*1000;
+  const hace14=ahora-14*24*3600*1000;
+  const semAct=pedidos.filter(p=>new Date(p.fecha).getTime()>hace7);
+  const semAnt=pedidos.filter(p=>{ const t=new Date(p.fecha).getTime(); return t>hace14&&t<=hace7; });
+  const vtaSemAct=semAct.reduce((s,p)=>s+Number(p.total),0);
+  const vtaSemAnt=semAnt.reduce((s,p)=>s+Number(p.total),0);
+  const variacion=vtaSemAnt>0?((vtaSemAct-vtaSemAnt)/vtaSemAnt)*100:0;
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:16}}>
+        {[
+          {label:"Ventas Totales",   val:fmt(totalVentas),    icon:"💵", color:"#586844"},
+          {label:"Ganancia Bruta",   val:fmt(totalGanancia),  icon:"📈", color:"#22c55e"},
+          {label:"Margen Promedio",  val:pct(margenProm),     icon:"📊", color:margenProm>=0.5?"#22c55e":margenProm>=0.35?"#f59e0b":"#dc2626"},
+          {label:"Ticket Promedio",  val:fmt(ticketProm),     icon:"🧾", color:"#9FAB86"},
+          {label:"Total Pedidos",    val:pedidos.length,      icon:"📦", color:"#586844"},
+          {label:"Clientes",         val:clientes.length,     icon:"👥", color:"#9FAB86"},
+        ].map(k=>(
+          <div key={k.label} style={S.statCard(k.color)}>
+            <div style={{fontSize:20,marginBottom:6}}>{k.icon}</div>
+            <div style={{fontSize:22,fontWeight:700,color:k.color}}>{k.val}</div>
+            <div style={{fontSize:10,color:"#888",letterSpacing:0.5,textTransform:"uppercase"}}>{k.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+        <div style={S.card}>
+          <strong style={{fontSize:14,display:"block",marginBottom:14}}>🏆 Top Productos</strong>
+          {topProds.length===0&&<div style={{color:"#aaa",fontSize:13}}>Sin datos aún.</div>}
+          {topProds.map((p,i)=>(
+            <div key={p.nombre} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f5f5f5"}}>
+              <span style={{fontSize:11,color:"#9FAB86",fontWeight:700,width:18}}>#{i+1}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:500}}>{p.nombre}</div>
+                <div style={{fontSize:10,color:"#aaa"}}>{p.qty} unidades</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:13,fontWeight:700,color:"#586844"}}>{fmt(p.revenue)}</div>
+                <div style={{fontSize:10,color:"#22c55e"}}>+{fmt(p.ganancia)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
+          <div style={S.card}>
+            <strong style={{fontSize:14,display:"block",marginBottom:12}}>💳 Por Forma de Pago</strong>
+            {Object.entries(porFormaPago).sort((a,b)=>b[1]-a[1]).map(([f,m])=>{
+              const p=totalVentas>0?(m/totalVentas)*100:0;
+              return(
+                <div key={f} style={{marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
+                    <span style={{fontWeight:500}}>{f}</span>
+                    <span><strong>{fmt(m)}</strong> <span style={{color:"#9FAB86"}}>({p.toFixed(0)}%)</span></span>
+                  </div>
+                  <div style={{height:5,background:"#f0f0f0",borderRadius:3}}>
+                    <div style={{width:`${p}%`,height:"100%",background:"#586844",borderRadius:3}}/>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={S.card}>
+            <strong style={{fontSize:14,display:"block",marginBottom:8}}>📅 Esta Semana</strong>
+            <div style={{fontSize:24,fontWeight:700,color:"#586844"}}>{fmt(vtaSemAct)}</div>
+            <div style={{fontSize:12,color:"#aaa"}}>{semAct.length} pedidos</div>
+            {vtaSemAnt>0&&(
+              <div style={{fontSize:12,marginTop:4,fontWeight:600,color:variacion>=0?"#22c55e":"#dc2626"}}>
+                {variacion>=0?"▲":"▼"} {Math.abs(variacion).toFixed(1)}% vs semana anterior
+              </div>
+            )}
+          </div>
+
+          <div style={S.card}>
+            <strong style={{fontSize:14,display:"block",marginBottom:10}}>🏅 Cliente Chill</strong>
+            {TIER_CONFIG.map(t=>(
+              <div key={t.name} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0"}}>
+                <span style={{fontSize:13}}>{t.badge} {t.name}</span>
+                <span style={S.badge(t.color)}>{tierCount[t.name]||0} clientes</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP PRINCIPAL ──────────────────────────────────────────────
+export default function App(){
+  const [tab,setTab]=useState("nuevo");
+  const [pedidos,setPedidos]=useState([]);
+  const [clientes,setClientes]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [syncing,setSyncing]=useState(false);
+  const [toast,setToast]=useState({msg:"",tipo:"ok"});
+
+  const showToast=(msg,tipo="ok")=>{ setToast({msg,tipo}); setTimeout(()=>setToast({msg:"",tipo:"ok"}),3500); };
+
+  const usandoSheets = SCRIPT_URL !== "TU_APPS_SCRIPT_URL_ACÁ";
+
+  // Cargar datos al iniciar
+  const cargarDatos=useCallback(async()=>{
+    if(!usandoSheets) return;
+    setLoading(true);
+    try {
+      const [resPedidos,resClientes]=await Promise.all([
+        sheetsGet("obtenerPedidos"),
+        sheetsGet("obtenerClientes"),
+      ]);
+      if(resPedidos.ok)  setPedidos(resPedidos.pedidos||[]);
+      if(resClientes.ok) setClientes(resClientes.clientes||[]);
+    } catch(e){ showToast("Error al cargar datos de Sheets","error"); }
+    setLoading(false);
+  },[usandoSheets]);
+
+  useEffect(()=>{ cargarDatos(); },[cargarDatos]);
+
+  const handleGuardarPedido=async(pedido)=>{
+    setSyncing(true);
+    if(usandoSheets){
+      try {
+        const res=await sheetsPost("guardarPedido",{pedido});
+        if(!res.ok) throw new Error(res.error);
+        await cargarDatos();
+        showToast("✓ Pedido guardado en Google Sheets");
+      } catch(e){
+        showToast("Error al guardar: "+e.message,"error");
+        setSyncing(false); return;
+      }
+    } else {
+      // Fallback local
+      setPedidos(prev=>[pedido,...prev]);
+      setClientes(prev=>{
+        const existe=prev.find(c=>c.nombre===pedido.clienteNombre);
+        if(existe) return prev.map(c=>c.nombre===pedido.clienteNombre?{...c,
+          totalPedidos:c.totalPedidos+1,totalComprado:c.totalComprado+pedido.total,
+          totalGanancia:c.totalGanancia+pedido.ganancia}:c);
+        return [...prev,{id:Date.now()+"c",nombre:pedido.clienteNombre,telefono:pedido.clienteTelefono,
+          totalPedidos:1,totalComprado:pedido.total,totalGanancia:pedido.ganancia}];
+      });
+      showToast("✓ Pedido guardado localmente");
+    }
+    setSyncing(false);
+    setTab("historial");
+  };
+
+  const handleEliminarPedido=async(id)=>{
+    if(!confirm("¿Eliminás este pedido?")) return;
+    if(usandoSheets){
+      try {
+        await sheetsPost("eliminarPedido",{id});
+        await cargarDatos();
+        showToast("Pedido eliminado");
+      } catch(e){ showToast("Error al eliminar","error"); }
+    } else {
+      setPedidos(prev=>prev.filter(p=>p.id!==id));
+      showToast("Pedido eliminado");
+    }
+  };
+
+  const TABS=[
+    {id:"nuevo",    label:"+ Nuevo Pedido"},
+    {id:"historial",label:`Historial (${pedidos.length})`},
+    {id:"clientes", label:`Clientes (${clientes.length})`},
+    {id:"dashboard",label:"Dashboard"},
+  ];
+
+  return(
+    <div style={S.app}>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;500;600;700&display=swap" rel="stylesheet"/>
+      <div style={S.header}>
+        <div>
+          <div style={S.logo}>🌿 Natural Chill</div>
+          <div style={S.logoSub}>Sistema de Pedidos</div>
+        </div>
+        <nav style={S.nav}>
+          {TABS.map(t=>(
+            <button key={t.id} style={S.navBtn(tab===t.id)} onClick={()=>setTab(t.id)}>{t.label}</button>
+          ))}
+          {usandoSheets&&(
+            <button style={{...S.navBtn(false),color:"#9FAB86"}} onClick={cargarDatos} title="Sincronizar con Sheets">
+              🔄 Sync
+            </button>
+          )}
+        </nav>
+      </div>
+
+      <div style={{maxWidth:1200,margin:"0 auto",padding:"24px 20px"}}>
+        <BannerConfig/>
+        {tab==="nuevo"    &&<NuevoPedido onGuardar={handleGuardarPedido} clientes={clientes} syncing={syncing}/>}
+        {tab==="historial"&&<Historial pedidos={pedidos} onEliminar={handleEliminarPedido} loading={loading}/>}
+        {tab==="clientes" &&<Clientes clientes={clientes} loading={loading}/>}
+        {tab==="dashboard"&&<Dashboard pedidos={pedidos} clientes={clientes}/>}
+      </div>
+
+      <Toast msg={toast.msg} tipo={toast.tipo}/>
+    </div>
+  );
+}
