@@ -338,9 +338,24 @@ async function cargarDatos(){
   showToast("⏳ Sincronizando...","warn");
   try{
     const rp=await apiCall("obtenerPedidos");
-    if(rp.ok) pedidos=rp.pedidos||[];
+    if(rp.ok) pedidos=(rp.pedidos||[]).map(p=>({...p,
+      clienteTelefono:String(p.clienteTelefono||""),
+      notas:String(p.notas||""),
+      margen:Number(p.margen)||0,
+      total:Number(p.total)||0,
+      costoTotal:Number(p.costoTotal)||0,
+      ganancia:Number(p.ganancia)||0,
+      descuentoPct:Number(p.descuentoPct)||0,
+      items:(p.items||[]).map(i=>({...i,qty:Number(i.qty)||0,precioFinal:Number(i.precioFinal)||0,costo:Number(i.costo)||0}))
+    }));
     const rc=await apiCall("obtenerClientes");
-    if(rc.ok) clientes=rc.clientes||[];
+    if(rc.ok) clientes=(rc.clientes||[]).map(c=>({...c,
+      telefono:String(c.telefono||""),
+      totalPedidos:Number(c.totalPedidos)||0,
+      totalComprado:Number(c.totalComprado)||0,
+      totalGanancia:Number(c.totalGanancia)||0,
+      ticketPromedio:Number(c.ticketPromedio)||0
+    }));
     updateNavCounts();
     renderHistorial();
     renderClientes();
@@ -508,7 +523,7 @@ function renderHistorial(){
     const m=Number(p.margen);const mc=m>=0.5?"#22c55e":m>=0.35?"#f59e0b":"#dc2626";
     const fecha=new Date(p.fecha);const fs=isNaN(fecha)?String(p.fecha):fecha.toLocaleDateString("es-UY",{day:"2-digit",month:"short",year:"numeric"});
     const tags=(p.items||[]).map(i=>`<span class="pedido-tag">${i.qty}× ${i.producto} ${i.presentacion}</span>`).join("");
-    const wa=p.clienteTelefono?`<a class="wa-link" href="https://wa.me/598${String(p.clienteTelefono||"").replace(/\D/g,"")}" target="_blank">📱 WA</a>`:"";
+    const wa=p.clienteTelefono&&String(p.clienteTelefono).trim()?`<a class="wa-link" href="https://wa.me/598${String(p.clienteTelefono).replace(/\D/g,"")}" target="_blank">📱 WA</a>`:"";
     return`<div class="pedido-card" style="border-left-color:${mc}">
       <div class="pedido-header">
         <div><span class="pedido-cliente">${p.clienteNombre}</span>${wa}<div class="pedido-fecha">${fs}</div></div>
@@ -542,7 +557,7 @@ function renderClientes(){
     const tier=getTier(Number(c.totalPedidos));
     const nt=TIERS[TIERS.indexOf(tier)+1];
     const pp=tier.max===99999?100:Math.min(((Number(c.totalPedidos)-tier.min)/(tier.max-tier.min+1))*100,100);
-    const wa=c.telefono?`<a class="wa-link" href="https://wa.me/598${String(c.telefono||"").replace(/\D/g,"")}" target="_blank">📱 ${c.telefono}</a>`:"";
+    const wa=c.telefono&&String(c.telefono).trim()?`<a class="wa-link" href="https://wa.me/598${String(c.telefono).replace(/\D/g,"")}" target="_blank">📱 ${String(c.telefono)}</a>`:"";
     return`<div class="cliente-card" style="border-left-color:${tier.color}">
       <div class="cliente-header">
         <div>
