@@ -431,20 +431,20 @@ window.onload = function() {
 };
 
 async function cargarDatos() {
+  showToast("⏳ Sincronizando...", "warn");
   try {
-    const [rp, rc] = await Promise.all([
-      apiCall("obtenerPedidos"),
-      apiCall("obtenerClientes")
-    ]);
-    if (rp.ok) { pedidos = rp.pedidos || []; }
-    if (rc.ok) { clientes = rc.clientes || []; }
+    const rp = await apiCall("obtenerPedidos");
+    if (rp.ok) pedidos = rp.pedidos || [];
+    const rc = await apiCall("obtenerClientes");
+    if (rc.ok) clientes = rc.clientes || [];
     updateNavCounts();
     renderHistorial();
     renderClientes();
     renderDashboard();
     showToast("✓ Datos sincronizados con Sheets");
   } catch(e) {
-    showToast("Sin conexión — trabajando offline", "warn");
+    showToast("Error al conectar con Sheets: " + e.message, "warn");
+    console.error(e);
   }
 }
 
