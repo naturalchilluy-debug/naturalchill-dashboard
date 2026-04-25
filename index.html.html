@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Natural Chill — Panel de Pedidos</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --dark:#222824;--sage:#9FAB86;--forest:#586844;--bg:#F7F8F5;--white:#fff;
+  --border:#e0e5da;--muted:#888;--red:#dc2626;--green:#22c55e;--yellow:#f59e0b;
+  --radius:14px;--shadow:0 2px 16px rgba(34,40,36,0.09);
+}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+
+/* HEADER */
+.header{background:var(--dark);padding:14px 28px;display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--forest);position:sticky;top:0;z-index:100}
+.logo-text{color:var(--sage);font-weight:700;font-size:17px;letter-spacing:.5px}
+.logo-sub{color:rgba(159,171,134,0.5);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-top:1px}
+.nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.nav-btn{padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-family:'Poppins',sans-serif;font-weight:600;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;background:transparent;color:var(--sage)}
+.nav-btn.active{background:var(--forest);color:#fff}
+.nav-btn:hover:not(.active){background:rgba(159,171,134,0.1)}
+.sync-btn{padding:8px 12px;border-radius:8px;border:1px solid rgba(159,171,134,0.3);cursor:pointer;font-size:11px;font-family:'Poppins',sans-serif;background:transparent;color:var(--sage);margin-left:8px}
+
+/* LAYOUT */
+.page{max-width:1200px;margin:0 auto;padding:24px 20px;display:none}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.card-title{font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+
+/* FORMS */
+label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);display:block;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;color:var(--dark);background:var(--white);outline:none;transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--sage)}
+textarea{resize:vertical;min-height:56px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{margin-bottom:12px}
+
+/* BUTTONS */
+.btn{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;font-size:13px;transition:all .2s}
+.btn-primary{background:var(--forest);color:#fff}
+.btn-primary:hover{background:#4a5a38}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.btn-secondary{background:#e8ede4;color:var(--forest)}
+.btn-secondary.active-mode{background:var(--forest);color:#fff}
+.btn-danger{background:#fee2e2;color:var(--red);padding:5px 11px;border-radius:7px;font-size:11px}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-full{width:100%;padding:13px}
+
+/* TABS CLIENTE */
+.mode-tabs{display:flex;gap:8px;margin-bottom:14px}
+
+/* PRODUCTOS */
+.prod-search-row{display:flex;gap:8px;margin-bottom:10px}
+.prod-search-row input{flex:1}
+.prod-search-row select{width:190px}
+.prod-list{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.prod-item{display:flex;align-items:center;padding:9px 12px;border-radius:10px;background:#f9faf8;border:1.5px solid var(--border);cursor:pointer;transition:all .15s}
+.prod-item:hover{border-color:var(--sage);background:#f0f5ed}
+.prod-item.in-cart{border-color:var(--sage);background:#f0f5ed}
+.prod-info{flex:1}
+.prod-name{font-weight:500;font-size:13px}
+.prod-pres{font-size:11px;color:var(--sage);margin-left:6px}
+.prod-prices{text-align:right;margin-right:12px}
+.prod-price{font-weight:700;font-size:13px;color:var(--forest)}
+.prod-cost{font-size:10px;color:var(--muted)}
+.prod-badge{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;background:#e8ede4;color:var(--forest);flex-shrink:0}
+.prod-item.in-cart .prod-badge{background:var(--forest);color:#fff}
+
+/* ITEMS CARRITO */
+.cart-item{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #f5f5f5}
+.cart-item-info{flex:1}
+.cart-item-name{font-weight:500;font-size:13px}
+.cart-item-sub{font-size:10px;color:var(--muted)}
+.qty-ctrl{display:flex;align-items:center;gap:5px}
+.qty-btn{width:26px;height:26px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-weight:700;font-size:14px;color:var(--forest);display:flex;align-items:center;justify-content:center}
+.qty-val{width:22px;text-align:center;font-weight:700;font-size:13px}
+.price-input{width:88px;text-align:right;font-weight:700;padding:6px 10px!important}
+
+/* RESUMEN */
+.summary-panel{position:sticky;top:80px}
+.summary-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+.summary-total{display:flex;justify-content:space-between;font-size:16px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.total-val{color:var(--forest)}
+.profit-box{background:#f7faf4;border-radius:10px;padding:14px;margin:14px 0}
+.profit-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--sage);margin-bottom:8px}
+.profit-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.margin-bar-wrap{height:5px;background:#e8ede4;border-radius:3px;margin-top:8px}
+.margin-bar{height:100%;border-radius:3px;transition:width .3s}
+.warn-box{background:#fff8ed;border-radius:10px;padding:13px;border:1px solid var(--yellow);margin-bottom:12px}
+.warn-title{font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:3px}
+.warn-text{font-size:11px;color:#666}
+
+/* PEDIDOS HISTORIAL */
+.pedido-card{border-radius:var(--radius);background:var(--white);padding:18px;box-shadow:var(--shadow);margin-bottom:12px;border-left:4px solid var(--sage)}
+.pedido-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.pedido-cliente{font-weight:700;font-size:15px}
+.pedido-fecha{font-size:11px;color:var(--muted);margin-top:2px}
+.pedido-total{font-size:18px;font-weight:700;color:var(--forest)}
+.pedido-pago{font-size:11px;color:var(--muted)}
+.pedido-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.pedido-tag{background:#f0f5ed;border-radius:20px;padding:2px 10px;font-size:11px;color:var(--forest)}
+.pedido-footer{display:flex;gap:14px;font-size:12px;color:#666;border-top:1px solid #f5f5f5;padding-top:10px;flex-wrap:wrap;align-items:center}
+.wa-link{color:#25D366;text-decoration:none;font-size:12px;margin-left:6px}
+.notas-text{font-size:11px;color:#888;font-style:italic;margin-top:6px}
+
+/* CLIENTES */
+.cliente-card{border-radius:var(--radius);background:var(--white);padding:18px;box-shadow:var(--shadow);margin-bottom:12px;border-left:4px solid var(--sage)}
+.cliente-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.cliente-nombre{font-weight:700;font-size:15px}
+.cliente-total{font-size:20px;font-weight:700;color:var(--forest)}
+.cliente-sub{font-size:10px;color:var(--muted)}
+.cliente-stats{display:flex;gap:18px;font-size:12px;color:#666;border-top:1px solid #f5f5f5;padding-top:10px;flex-wrap:wrap}
+.tier-badge{border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700}
+.tier-bar-wrap{height:4px;background:#f0f0f0;border-radius:2px;margin-top:8px}
+.tier-bar{height:100%;border-radius:2px;transition:width .5s}
+.tier-next{font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:2px}
+
+/* DASHBOARD KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--white);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);border-left:4px solid var(--sage)}
+.kpi-icon{font-size:20px;margin-bottom:6px}
+.kpi-val{font-size:22px;font-weight:700}
+.kpi-label{font-size:10px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.bar-row{margin-bottom:10px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.bar-track{height:5px;background:#f0f0f0;border-radius:3px}
+.bar-fill{height:100%;background:var(--forest);border-radius:3px}
+.top-prod-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f8f8f8}
+.top-rank{font-size:11px;color:var(--sage);font-weight:700;width:18px}
+.top-info{flex:1}
+.top-name{font-size:12px;font-weight:500}
+.top-qty{font-size:10px;color:var(--muted)}
+.top-rev{text-align:right}
+.top-rev-val{font-size:13px;font-weight:700;color:var(--forest)}
+.top-gan{font-size:10px;color:var(--green)}
+.tier-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:12px;font-weight:600;font-size:13px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2);color:#fff;display:none;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* BANNER CONFIG */
+.banner-config{background:#fff3cd;border:1px solid var(--yellow);border-radius:10px;padding:14px;margin-bottom:18px;font-size:12px;display:none}
+.banner-config.show{display:block}
+
+/* NUEVO PEDIDO LAYOUT */
+.pedido-layout{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:10px 0}
+
+@media(max-width:768px){
+  .pedido-layout{grid-template-columns:1fr}
+  .summary-panel{position:static}
+  .dash-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .prod-search-row{flex-direction:column}
+  .prod-search-row select{width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="logo-text">🌿 Natural Chill</div>
+    <div class="logo-sub">Panel de Pedidos</div>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showTab('nuevo')">+ Nuevo Pedido</button>
+    <button class="nav-btn" onclick="showTab('historial')" id="tab-historial">Historial</button>
+    <button class="nav-btn" onclick="showTab('clientes')" id="tab-clientes">Clientes</button>
+    <button class="nav-btn" onclick="showTab('dashboard')">Dashboard</button>
+    <button class="sync-btn" onclick="cargarDatos()" title="Sincronizar">🔄 Sync</button>
+  </nav>
+</div>
+
+<!-- NUEVO PEDIDO -->
+<div class="page active" id="page-nuevo">
+  <div class="banner-config" id="banner-config">
+    ⚙️ <strong>Configuración pendiente:</strong> Editá la variable <code>SCRIPT_URL</code> en este archivo HTML con tu URL de Apps Script.
+  </div>
+  <div class="pedido-layout">
+    <!-- Panel izquierdo -->
+    <div>
+      <!-- Cliente -->
+      <div class="card">
+        <div class="card-title">👤 Cliente</div>
+        <div class="mode-tabs">
+          <button class="btn btn-secondary btn-sm active-mode" id="btn-nuevo" onclick="setClienteMode('nuevo')">Nuevo</button>
+          <button class="btn btn-secondary btn-sm" id="btn-existente" onclick="setClienteMode('existente')">Existente</button>
+        </div>
+        <div id="form-nuevo">
+          <div class="form-row">
+            <div class="form-group"><label>Nombre</label><input id="cli-nombre" placeholder="Ej: María García"/></div>
+            <div class="form-group"><label>Teléfono</label><input id="cli-tel" placeholder="09X XXX XXX"/></div>
+          </div>
+        </div>
+        <div id="form-existente" style="display:none">
+          <div class="form-group"><label>Seleccioná cliente</label>
+            <select id="cli-select"><option value="">— Seleccioná —</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Productos -->
+      <div class="card">
+        <div class="card-title">🛒 Agregar productos</div>
+        <div class="prod-search-row">
+          <input id="busq-prod" placeholder="Buscar producto..." oninput="renderProds()"/>
+          <select id="filtro-cat" onchange="renderProds()">
+            <option value="">Todas las categorías</option>
+          </select>
+        </div>
+        <div class="prod-list" id="prod-list"></div>
+      </div>
+
+      <!-- Carrito -->
+      <div class="card" id="cart-card" style="display:none">
+        <div class="card-title">📦 Ítems del pedido</div>
+        <div id="cart-items"></div>
+      </div>
+    </div>
+
+    <!-- Panel derecho -->
+    <div class="summary-panel">
+      <div class="card">
+        <div class="card-title">💰 Resumen</div>
+        <div class="summary-row"><span style="color:#666">Subtotal</span><strong id="sum-subtotal">$ 0</strong></div>
+        <div class="form-group" style="margin-top:10px">
+          <label>Descuento %</label>
+          <input type="number" id="descuento" min="0" max="50" value="0" style="text-align:right" oninput="calcTotals()"/>
+          <div id="dto-monto" style="font-size:11px;color:var(--red);text-align:right;margin-top:2px;display:none"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-total"><span>Total</span><span class="total-val" id="sum-total">$ 0</span></div>
+        <div class="profit-box">
+          <div class="profit-title">Rentabilidad</div>
+          <div class="profit-row"><span style="color:#666">Costo total</span><strong id="prof-costo" style="color:var(--red)">$ 0</strong></div>
+          <div class="profit-row"><span style="color:#666">Ganancia bruta</span><strong id="prof-gan" style="color:var(--forest)">$ 0</strong></div>
+          <div class="profit-row"><span style="color:#666">Margen</span><strong id="prof-margen">0%</strong></div>
+          <div class="margin-bar-wrap"><div class="margin-bar" id="margen-bar" style="width:0%;background:var(--green)"></div></div>
+        </div>
+        <div class="form-group">
+          <label>Forma de pago</label>
+          <select id="forma-pago">
+            <option>Efectivo</option><option selected>Transferencia</option>
+            <option>MercadoPago</option><option>Tarjeta débito</option><option>Tarjeta crédito</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <textarea id="notas" placeholder="Observaciones..."></textarea>
+        </div>
+        <div class="warn-box" id="warn-margen" style="display:none">
+          <div class="warn-title">⚠️ MARGEN BAJO</div>
+          <div class="warn-text">Margen menor al 35%. Revisá precios.</div>
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-confirmar" onclick="confirmarPedido()">✓ Confirmar pedido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORIAL -->
+<div class="page" id="page-historial">
+  <div class="card">
+    <input id="filtro-hist" placeholder="Buscar por cliente o forma de pago..." oninput="renderHistorial()"/>
+  </div>
+  <div id="historial-list"></div>
+</div>
+
+<!-- CLIENTES -->
+<div class="page" id="page-clientes">
+  <div class="card">
+    <input id="filtro-cli" placeholder="Buscar cliente..." oninput="renderClientes()"/>
+  </div>
+  <div id="clientes-list"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page" id="page-dashboard">
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="dash-grid">
+    <div class="card">
+      <div class="card-title">🏆 Top Productos</div>
+      <div id="top-prods"></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">💳 Por Forma de Pago</div>
+        <div id="chart-pago"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">📅 Esta Semana</div>
+        <div id="semana-stats"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🏅 Cliente Chill</div>
+        <div id="tier-stats"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURACIÓN — CAMBIÁ ESTA URL
+// ═══════════════════════════════════════════════════════════════
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKtlpPlJ33cYFj9h7sArt4AUKUmsseIwjuxGIAJsB69VlihvonKDSgFy17qd0XnA8X/exec";
+
+// ─── PRODUCTOS ──────────────────────────────────────────────────
+const PRODUCTOS = [
+  {cod:"P001",producto:"Almendras Naturales",presentacion:"1 kg",categoria:"Frutos Secos",costo:486.38,precio:750},
+  {cod:"P002",producto:"Almendras Naturales",presentacion:"500 g",categoria:"Frutos Secos",costo:250.19,precio:420},
+  {cod:"P003",producto:"Almendras Naturales",presentacion:"250 g",categoria:"Frutos Secos",costo:132.1,precio:300},
+  {cod:"P004",producto:"Castañas Tostadas",presentacion:"1 kg",categoria:"Frutos Secos",costo:453.2,precio:799},
+  {cod:"P005",producto:"Castañas Tostadas",presentacion:"500 g",categoria:"Frutos Secos",costo:233.6,precio:488},
+  {cod:"P006",producto:"Castañas Tostadas",presentacion:"250 g",categoria:"Frutos Secos",costo:123.8,precio:311},
+  {cod:"P007",producto:"Maní Tostado",presentacion:"1 kg",categoria:"Frutos Secos",costo:111.6,precio:250},
+  {cod:"P008",producto:"Maní Tostado",presentacion:"500 g",categoria:"Frutos Secos",costo:62.8,precio:159},
+  {cod:"P009",producto:"Maní Tostado",presentacion:"250 g",categoria:"Frutos Secos",costo:38.4,precio:80},
+  {cod:"P010",producto:"Nueces Cuartos",presentacion:"1 kg",categoria:"Frutos Secos",costo:414.16,precio:750},
+  {cod:"P011",producto:"Nueces Cuartos",presentacion:"500 g",categoria:"Frutos Secos",costo:214.08,precio:420},
+  {cod:"P012",producto:"Nueces Cuartos",presentacion:"250 g",categoria:"Frutos Secos",costo:115.99,precio:300},
+  {cod:"P013",producto:"Pasas de Uva Jumbo",presentacion:"1 kg",categoria:"Frutas Secas",costo:158.45,precio:329},
+  {cod:"P014",producto:"Pasas de Uva Jumbo",presentacion:"500 g",categoria:"Frutas Secas",costo:86.22,precio:199},
+  {cod:"P015",producto:"Pasas de Uva Jumbo",presentacion:"250 g",categoria:"Frutas Secas",costo:50.11,precio:129},
+  {cod:"P016",producto:"Pasas de Uva Mediana",presentacion:"1 kg",categoria:"Frutas Secas",costo:165.77,precio:289},
+  {cod:"P017",producto:"Pasas de Uva Mediana",presentacion:"500 g",categoria:"Frutas Secas",costo:89.88,precio:173},
+  {cod:"P018",producto:"Pasas de Uva Mediana",presentacion:"250 g",categoria:"Frutas Secas",costo:51.94,precio:115},
+  {cod:"P019",producto:"Ciruelas sin carozo",presentacion:"1 kg",categoria:"Frutas Secas",costo:233.6,precio:320},
+  {cod:"P020",producto:"Ciruelas sin carozo",presentacion:"500 g",categoria:"Frutas Secas",costo:123.8,precio:179},
+  {cod:"P021",producto:"Ciruelas sin carozo",presentacion:"250 g",categoria:"Frutas Secas",costo:68.9,precio:99},
+  {cod:"P022",producto:"Pistachos cáscara",presentacion:"1 kg",categoria:"Pistachos",costo:984,precio:1250},
+  {cod:"P023",producto:"Pistachos cáscara",presentacion:"500 g",categoria:"Pistachos",costo:492,precio:700},
+  {cod:"P024",producto:"Pistachos pelados naturales",presentacion:"1 kg",categoria:"Pistachos",costo:1600,precio:2250},
+  {cod:"P025",producto:"Pistachos pelados naturales",presentacion:"500 g",categoria:"Pistachos",costo:807,precio:1200},
+  {cod:"P026",producto:"Pistachos pelados naturales",presentacion:"250 g",categoria:"Pistachos",costo:410.5,precio:700},
+  {cod:"P027",producto:"Pistachos pelados tostados",presentacion:"1 kg",categoria:"Pistachos",costo:1600,precio:2500},
+  {cod:"P028",producto:"Pistachos pelados tostados",presentacion:"500 g",categoria:"Pistachos",costo:807,precio:1300},
+  {cod:"P029",producto:"Pistachos pelados tostados",presentacion:"250 g",categoria:"Pistachos",costo:410.5,precio:800},
+  {cod:"P030",producto:"Mix Clásico",presentacion:"1 kg",categoria:"Mix / Combinados",costo:388,precio:570},
+  {cod:"P031",producto:"Mix Clásico",presentacion:"500 g",categoria:"Mix / Combinados",costo:215,precio:310},
+  {cod:"P032",producto:"Mix Clásico",presentacion:"250 g",categoria:"Mix / Combinados",costo:124,precio:177},
+  {cod:"P033",producto:"Mix Tradicional",presentacion:"1 kg",categoria:"Mix / Combinados",costo:426,precio:630},
+  {cod:"P034",producto:"Mix Tradicional",presentacion:"500 g",categoria:"Mix / Combinados",costo:236,precio:340},
+  {cod:"P035",producto:"Mix Tradicional",presentacion:"250 g",categoria:"Mix / Combinados",costo:136,precio:193},
+  {cod:"P036",producto:"Mix Esencial",presentacion:"1 kg",categoria:"Mix / Combinados",costo:449,precio:710},
+  {cod:"P037",producto:"Mix Esencial",presentacion:"500 g",categoria:"Mix / Combinados",costo:245,precio:380},
+  {cod:"P038",producto:"Mix Esencial",presentacion:"250 g",categoria:"Mix / Combinados",costo:140,precio:210},
+  {cod:"P039",producto:"Mix Power",presentacion:"1 kg",categoria:"Mix / Combinados",costo:567,precio:790},
+  {cod:"P040",producto:"Mix Power",presentacion:"500 g",categoria:"Mix / Combinados",costo:304,precio:450},
+  {cod:"P041",producto:"Mix Power",presentacion:"250 g",categoria:"Mix / Combinados",costo:169,precio:240},
+  {cod:"P042",producto:"Granola Premium",presentacion:"400 g",categoria:"Granola",costo:184,precio:329},
+  {cod:"P043",producto:"Granola Clásica",presentacion:"400 g",categoria:"Granola",costo:129,precio:219},
+  {cod:"P044",producto:"Chía",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:254,precio:359},
+  {cod:"P045",producto:"Chía",presentacion:"500 g",categoria:"Semillas y Cereales",costo:134,precio:195},
+  {cod:"P046",producto:"Chía",presentacion:"250 g",categoria:"Semillas y Cereales",costo:74,precio:102},
+  {cod:"P047",producto:"Lino",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:114,precio:169},
+  {cod:"P048",producto:"Lino",presentacion:"500 g",categoria:"Semillas y Cereales",costo:64,precio:99},
+  {cod:"P049",producto:"Lino",presentacion:"250 g",categoria:"Semillas y Cereales",costo:39,precio:57},
+  {cod:"P050",producto:"Girasol",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:148,precio:249},
+  {cod:"P051",producto:"Girasol",presentacion:"500 g",categoria:"Semillas y Cereales",costo:84,precio:150},
+  {cod:"P052",producto:"Girasol",presentacion:"250 g",categoria:"Semillas y Cereales",costo:49,precio:88},
+  {cod:"P053",producto:"Sésamo",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:169,precio:259},
+  {cod:"P054",producto:"Sésamo",presentacion:"500 g",categoria:"Semillas y Cereales",costo:94,precio:149},
+  {cod:"P055",producto:"Sésamo",presentacion:"250 g",categoria:"Semillas y Cereales",costo:54,precio:77},
+  {cod:"P056",producto:"Zapallo",presentacion:"1 kg",categoria:"Semillas y Cereales",costo:420,precio:699},
+  {cod:"P057",producto:"Zapallo",presentacion:"500 g",categoria:"Semillas y Cereales",costo:224,precio:368},
+  {cod:"P058",producto:"Zapallo",presentacion:"250 g",categoria:"Semillas y Cereales",costo:119,precio:203},
+  {cod:"P059",producto:"Coco rallado",presentacion:"1 kg",categoria:"Frutas Secas",costo:342,precio:684},
+  {cod:"P060",producto:"Coco rallado",presentacion:"500 g",categoria:"Frutas Secas",costo:178,precio:400},
+  {cod:"P061",producto:"Crema de Maní Clásica",presentacion:"320 g",categoria:"Frutos Secos",costo:160,precio:220},
+  {cod:"P062",producto:"Crema de Maní Estilo Americano",presentacion:"320 g",categoria:"Frutos Secos",costo:160,precio:230},
+  {cod:"P063",producto:"Crema de Maní Crocante",presentacion:"320 g",categoria:"Frutos Secos",costo:160,precio:250},
+  {cod:"P064",producto:"Miel Orgánica",presentacion:"1 kg",categoria:"Otros",costo:205,precio:270},
+  {cod:"P065",producto:"Miel Orgánica",presentacion:"400 g",categoria:"Otros",costo:130,precio:160},
+];
+
+const TIERS = [
+  {name:"Nuevo",  min:0,  max:1,        color:"#9FAB86", badge:"🌱"},
+  {name:"Chill",  min:2,  max:4,        color:"#586844", badge:"⭐"},
+  {name:"Premium",min:5,  max:9,        color:"#3d5c2a", badge:"💎"},
+  {name:"VIP",    min:10, max:Infinity, color:"#222824", badge:"👑"},
+];
+
+// ─── ESTADO ──────────────────────────────────────────────────────
+let carrito = [];
+let pedidos = [];
+let clientes = [];
+let clienteMode = "nuevo";
+
+const fmt = n => "$ " + Math.round(n).toLocaleString("es-UY");
+const pct = n => (n*100).toFixed(1) + "%";
+const getTier = n => TIERS.find(t => n >= t.min && n <= t.max) || TIERS[0];
+
+// ─── API ─────────────────────────────────────────────────────────
+async function apiCall(action, data={}) {
+  const params = new URLSearchParams({ action });
+  if (Object.keys(data).length) params.append("data", JSON.stringify(data));
+  const r = await fetch(`${SCRIPT_URL}?${params.toString()}`);
+  return r.json();
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+window.onload = function() {
+  // Poblar categorías
+  const cats = ["", ...new Set(PRODUCTOS.map(p => p.categoria))];
+  const sel = document.getElementById("filtro-cat");
+  cats.forEach(c => {
+    const o = document.createElement("option");
+    o.value = c; o.textContent = c || "Todas las categorías";
+    sel.appendChild(o);
+  });
+  renderProds();
+  cargarDatos();
+};
+
+async function cargarDatos() {
+  try {
+    const [rp, rc] = await Promise.all([
+      apiCall("obtenerPedidos"),
+      apiCall("obtenerClientes")
+    ]);
+    if (rp.ok) { pedidos = rp.pedidos || []; }
+    if (rc.ok) { clientes = rc.clientes || []; }
+    updateNavCounts();
+    renderHistorial();
+    renderClientes();
+    renderDashboard();
+    showToast("✓ Datos sincronizados con Sheets");
+  } catch(e) {
+    showToast("Sin conexión — trabajando offline", "warn");
+  }
+}
+
+// ─── TABS ────────────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + tab).classList.add("active");
+  event.target.classList.add("active");
+  if (tab === "dashboard") renderDashboard();
+}
+
+function updateNavCounts() {
+  document.getElementById("tab-historial").textContent = `Historial (${pedidos.length})`;
+  document.getElementById("tab-clientes").textContent = `Clientes (${clientes.length})`;
+}
+
+// ─── CLIENTE MODE ────────────────────────────────────────────────
+function setClienteMode(mode) {
+  clienteMode = mode;
+  document.getElementById("form-nuevo").style.display = mode === "nuevo" ? "block" : "none";
+  document.getElementById("form-existente").style.display = mode === "existente" ? "block" : "none";
+  document.getElementById("btn-nuevo").classList.toggle("active-mode", mode === "nuevo");
+  document.getElementById("btn-existente").classList.toggle("active-mode", mode === "existente");
+  // Poblar select clientes
+  if (mode === "existente") {
+    const sel = document.getElementById("cli-select");
+    sel.innerHTML = '<option value="">— Seleccioná —</option>';
+    clientes.sort((a,b) => b.totalComprado - a.totalComprado).forEach(c => {
+      const tier = getTier(c.totalPedidos);
+      const o = document.createElement("option");
+      o.value = c.id; o.textContent = `${tier.badge} ${c.nombre} · ${c.totalPedidos} pedidos`;
+      sel.appendChild(o);
+    });
+  }
+}
+
+// ─── PRODUCTOS ───────────────────────────────────────────────────
+function renderProds() {
+  const busq = document.getElementById("busq-prod").value.toLowerCase();
+  const cat = document.getElementById("filtro-cat").value;
+  const list = document.getElementById("prod-list");
+  const filtered = PRODUCTOS.filter(p => {
+    const mc = !cat || p.categoria === cat;
+    const mb = !busq || p.producto.toLowerCase().includes(busq) || p.presentacion.includes(busq);
+    return mc && mb;
+  });
+  list.innerHTML = filtered.map(p => {
+    const inCart = carrito.find(i => i.cod === p.cod);
+    return `<div class="prod-item ${inCart ? 'in-cart' : ''}" onclick="addToCart('${p.cod}')">
+      <div class="prod-info">
+        <span class="prod-name">${p.producto}</span>
+        <span class="prod-pres">${p.presentacion}</span>
+      </div>
+      <div class="prod-prices">
+        <div class="prod-price">${fmt(p.precio)}</div>
+        <div class="prod-cost">costo ${fmt(p.costo)}</div>
+      </div>
+      <div class="prod-badge">${inCart ? inCart.qty : "+"}</div>
+    </div>`;
+  }).join("");
+}
+
+function addToCart(cod) {
+  const prod = PRODUCTOS.find(p => p.cod === cod);
+  const exists = carrito.find(i => i.cod === cod);
+  if (exists) carrito = carrito.map(i => i.cod === cod ? {...i, qty: i.qty+1} : i);
+  else carrito.push({...prod, qty: 1, precioFinal: prod.precio});
+  renderProds();
+  renderCart();
+  calcTotals();
+}
+
+function updateQty(cod, delta) {
+  const item = carrito.find(i => i.cod === cod);
+  if (!item) return;
+  const newQty = item.qty + delta;
+  if (newQty < 1) { carrito = carrito.filter(i => i.cod !== cod); }
+  else { carrito = carrito.map(i => i.cod === cod ? {...i, qty: newQty} : i); }
+  renderProds(); renderCart(); calcTotals();
+}
+
+function updatePrice(cod, val) {
+  carrito = carrito.map(i => i.cod === cod ? {...i, precioFinal: Number(val)} : i);
+  calcTotals();
+}
+
+function renderCart() {
+  const card = document.getElementById("cart-card");
+  if (carrito.length === 0) { card.style.display = "none"; return; }
+  card.style.display = "block";
+  document.getElementById("cart-items").innerHTML = carrito.map(item => `
+    <div class="cart-item">
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.producto} <span style="color:var(--sage);font-size:11px">${item.presentacion}</span></div>
+        <div class="cart-item-sub">costo ${fmt(item.costo)}/u</div>
+      </div>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="updateQty('${item.cod}',-1)">−</button>
+        <span class="qty-val">${item.qty}</span>
+        <button class="qty-btn" onclick="updateQty('${item.cod}',1)">+</button>
+      </div>
+      <input class="price-input" type="number" value="${item.precioFinal}" onchange="updatePrice('${item.cod}',this.value)"/>
+      <button class="btn btn-danger" onclick="removeFromCart('${item.cod}')">✕</button>
+    </div>`).join("");
+}
+
+function removeFromCart(cod) {
+  carrito = carrito.filter(i => i.cod !== cod);
+  renderProds(); renderCart(); calcTotals();
+}
+
+function calcTotals() {
+  const dto = Number(document.getElementById("descuento").value) || 0;
+  const subtotal = carrito.reduce((s,i) => s + i.precioFinal * i.qty, 0);
+  const costoTotal = carrito.reduce((s,i) => s + i.costo * i.qty, 0);
+  const dtoMonto = subtotal * (dto/100);
+  const total = subtotal - dtoMonto;
+  const ganancia = total - costoTotal;
+  const margen = total > 0 ? ganancia/total : 0;
+  const mc = margen >= 0.5 ? "#22c55e" : margen >= 0.35 ? "#f59e0b" : "#dc2626";
+
+  document.getElementById("sum-subtotal").textContent = fmt(subtotal);
+  document.getElementById("sum-total").textContent = fmt(total);
+  document.getElementById("prof-costo").textContent = fmt(costoTotal);
+  document.getElementById("prof-gan").textContent = fmt(ganancia);
+  document.getElementById("prof-margen").textContent = pct(margen);
+  document.getElementById("prof-margen").style.color = mc;
+  document.getElementById("margen-bar").style.width = Math.min(margen*100,100) + "%";
+  document.getElementById("margen-bar").style.background = mc;
+
+  const dtoEl = document.getElementById("dto-monto");
+  if (dto > 0) { dtoEl.style.display = "block"; dtoEl.textContent = "− " + fmt(dtoMonto); }
+  else dtoEl.style.display = "none";
+
+  document.getElementById("warn-margen").style.display = carrito.length > 0 && margen < 0.35 ? "block" : "none";
+}
+
+// ─── CONFIRMAR PEDIDO ────────────────────────────────────────────
+async function confirmarPedido() {
+  if (carrito.length === 0) { alert("Agregá al menos un producto"); return; }
+
+  let clienteNombre, clienteTelefono, esNuevo;
+  if (clienteMode === "nuevo") {
+    clienteNombre = document.getElementById("cli-nombre").value.trim();
+    clienteTelefono = document.getElementById("cli-tel").value.trim();
+    esNuevo = true;
+  } else {
+    const sel = document.getElementById("cli-select");
+    const cli = clientes.find(c => c.id === sel.value);
+    if (!cli) { alert("Seleccioná un cliente"); return; }
+    clienteNombre = cli.nombre; clienteTelefono = cli.telefono; esNuevo = false;
+  }
+  if (!clienteNombre) { alert("Ingresá el nombre del cliente"); return; }
+
+  const dto = Number(document.getElementById("descuento").value) || 0;
+  const subtotal = carrito.reduce((s,i) => s + i.precioFinal * i.qty, 0);
+  const costoTotal = carrito.reduce((s,i) => s + i.costo * i.qty, 0);
+  const dtoMonto = subtotal * (dto/100);
+  const total = subtotal - dtoMonto;
+  const ganancia = total - costoTotal;
+  const margen = total > 0 ? ganancia/total : 0;
+
+  const pedido = {
+    id: Date.now(), fecha: new Date().toISOString(),
+    clienteNombre, clienteTelefono, esClienteNuevo: esNuevo,
+    items: carrito.map(i => ({...i})),
+    subtotal, descuentoPct: dto, descuentoMonto: dtoMonto,
+    total, costoTotal, ganancia, margen,
+    formaPago: document.getElementById("forma-pago").value,
+    notas: document.getElementById("notas").value
+  };
+
+  const btn = document.getElementById("btn-confirmar");
+  btn.disabled = true; btn.textContent = "⏳ Guardando...";
+
+  try {
+    const res = await apiCall("guardarPedido", {pedido});
+    if (!res.ok) throw new Error(res.error);
+    showToast("✓ Pedido guardado en Google Sheets");
+    await cargarDatos();
+  } catch(e) {
+    // Guardar localmente igual
+    pedidos.unshift(pedido);
+    actualizarClienteLocal(pedido);
+    updateNavCounts();
+    renderHistorial(); renderClientes();
+    showToast("Guardado localmente (sin conexión)", "warn");
+  }
+
+  // Reset
+  carrito = [];
+  document.getElementById("cli-nombre").value = "";
+  document.getElementById("cli-tel").value = "";
+  document.getElementById("descuento").value = 0;
+  document.getElementById("notas").value = "";
+  renderProds(); renderCart(); calcTotals();
+  btn.disabled = false; btn.textContent = "✓ Confirmar pedido";
+  showTab_direct("historial");
+}
+
+function actualizarClienteLocal(pedido) {
+  const existe = clientes.find(c => c.nombre === pedido.clienteNombre);
+  if (existe) {
+    existe.totalPedidos++; existe.totalComprado += pedido.total; existe.totalGanancia += pedido.ganancia;
+  } else {
+    clientes.push({id: Date.now()+"c", nombre: pedido.clienteNombre, telefono: pedido.clienteTelefono,
+      totalPedidos:1, totalComprado: pedido.total, totalGanancia: pedido.ganancia});
+  }
+}
+
+function showTab_direct(tab) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + tab).classList.add("active");
+  document.getElementById("tab-" + tab)?.classList.add("active");
+}
+
+// ─── HISTORIAL ───────────────────────────────────────────────────
+function renderHistorial() {
+  const filtro = document.getElementById("filtro-hist").value.toLowerCase();
+  const list = document.getElementById("historial-list");
+  const filtered = pedidos
+    .filter(p => !filtro || p.clienteNombre?.toLowerCase().includes(filtro) || p.formaPago?.toLowerCase().includes(filtro))
+    .sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+
+  if (filtered.length === 0) { list.innerHTML = '<div class="card loading">No hay pedidos registrados.</div>'; return; }
+
+  list.innerHTML = filtered.map(p => {
+    const m = Number(p.margen);
+    const mc = m >= 0.5 ? "#22c55e" : m >= 0.35 ? "#f59e0b" : "#dc2626";
+    const fecha = new Date(p.fecha);
+    const fechaStr = isNaN(fecha) ? String(p.fecha) : fecha.toLocaleDateString("es-UY",{day:"2-digit",month:"short",year:"numeric"});
+    const tags = (p.items||[]).map(i => `<span class="pedido-tag">${i.qty}× ${i.producto} ${i.presentacion}</span>`).join("");
+    const waLink = p.clienteTelefono ? `<a class="wa-link" href="https://wa.me/598${p.clienteTelefono.replace(/\D/g,'')}" target="_blank">📱 WA</a>` : "";
+    return `<div class="pedido-card" style="border-left-color:${mc}">
+      <div class="pedido-header">
+        <div>
+          <span class="pedido-cliente">${p.clienteNombre}</span>${waLink}
+          <div class="pedido-fecha">${fechaStr}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pedido-total">${fmt(Number(p.total))}</div>
+          <div class="pedido-pago">${p.formaPago}</div>
+        </div>
+      </div>
+      ${tags ? `<div class="pedido-tags">${tags}</div>` : ""}
+      <div class="pedido-footer">
+        <span>Costo: <strong style="color:var(--red)">${fmt(Number(p.costoTotal))}</strong></span>
+        <span>Ganancia: <strong style="color:var(--forest)">${fmt(Number(p.ganancia))}</strong></span>
+        <span>Margen: <strong style="color:${mc}">${pct(m)}</strong></span>
+        ${Number(p.descuentoPct)>0 ? `<span>Dto: <strong style="color:var(--yellow)">${p.descuentoPct}%</strong></span>` : ""}
+        <button class="btn btn-danger" style="margin-left:auto" onclick="eliminarPedido(${p.id})">Eliminar</button>
+      </div>
+      ${p.notas ? `<div class="notas-text">💬 ${p.notas}</div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+async function eliminarPedido(id) {
+  if (!confirm("¿Eliminás este pedido?")) return;
+  try {
+    await apiCall("eliminarPedido", {id});
+    await cargarDatos();
+    showToast("Pedido eliminado");
+  } catch(e) {
+    pedidos = pedidos.filter(p => p.id !== id);
+    renderHistorial(); updateNavCounts();
+    showToast("Eliminado localmente");
+  }
+}
+
+// ─── CLIENTES ────────────────────────────────────────────────────
+function renderClientes() {
+  const filtro = document.getElementById("filtro-cli").value.toLowerCase();
+  const list = document.getElementById("clientes-list");
+  const filtered = clientes
+    .filter(c => !filtro || c.nombre?.toLowerCase().includes(filtro) || c.telefono?.includes(filtro))
+    .sort((a,b) => Number(b.totalComprado) - Number(a.totalComprado));
+
+  if (filtered.length === 0) { list.innerHTML = '<div class="card loading">Los clientes aparecen al registrar pedidos.</div>'; return; }
+
+  list.innerHTML = filtered.map(c => {
+    const tier = getTier(Number(c.totalPedidos));
+    const pct_tier = tier.max === Infinity ? 100 : Math.min(((Number(c.totalPedidos)-tier.min)/(tier.max-tier.min+1))*100, 100);
+    const nextTier = TIERS[TIERS.indexOf(tier)+1];
+    const waLink = c.telefono ? `<a class="wa-link" href="https://wa.me/598${c.telefono.replace(/\D/g,'')}" target="_blank">📱 ${c.telefono}</a>` : "";
+    return `<div class="cliente-card" style="border-left-color:${tier.color}">
+      <div class="cliente-header">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span class="cliente-nombre">${c.nombre}</span>
+            <span class="tier-badge" style="background:${tier.color}22;color:${tier.color}">${tier.badge} ${tier.name}</span>
+          </div>
+          ${waLink}
+        </div>
+        <div style="text-align:right">
+          <div class="cliente-total">${fmt(Number(c.totalComprado))}</div>
+          <div class="cliente-sub">total comprado</div>
+        </div>
+      </div>
+      <div class="cliente-stats">
+        <span>🛒 <strong>${c.totalPedidos}</strong> pedidos</span>
+        <span>💰 Ganancia: <strong style="color:var(--forest)">${fmt(Number(c.totalGanancia))}</strong></span>
+        <span>🧾 Ticket: <strong>${fmt(Number(c.ticketPromedio)||Number(c.totalComprado)/Math.max(Number(c.totalPedidos),1))}</strong></span>
+      </div>
+      ${nextTier ? `
+        <div class="tier-next">→ ${nextTier.name}: ${c.totalPedidos}/${tier.max+1} pedidos</div>
+        <div class="tier-bar-wrap"><div class="tier-bar" style="width:${pct_tier}%;background:${tier.color}"></div></div>
+      ` : ""}
+    </div>`;
+  }).join("");
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────────
+function renderDashboard() {
+  const totalVentas = pedidos.reduce((s,p) => s+Number(p.total), 0);
+  const totalGanancia = pedidos.reduce((s,p) => s+Number(p.ganancia), 0);
+  const margenProm = totalVentas > 0 ? totalGanancia/totalVentas : 0;
+  const ticketProm = pedidos.length > 0 ? totalVentas/pedidos.length : 0;
+  const mc = margenProm >= 0.5 ? "#22c55e" : margenProm >= 0.35 ? "#f59e0b" : "#dc2626";
+
+  // KPIs
+  document.getElementById("kpi-grid").innerHTML = [
+    {icon:"💵", val:fmt(totalVentas),    label:"Ventas Totales",   color:"#586844"},
+    {icon:"📈", val:fmt(totalGanancia),  label:"Ganancia Bruta",   color:"#22c55e"},
+    {icon:"📊", val:pct(margenProm),     label:"Margen Promedio",  color:mc},
+    {icon:"🧾", val:fmt(ticketProm),     label:"Ticket Promedio",  color:"#9FAB86"},
+    {icon:"📦", val:pedidos.length,      label:"Total Pedidos",    color:"#586844"},
+    {icon:"👥", val:clientes.length,     label:"Clientes",         color:"#9FAB86"},
+  ].map(k => `<div class="kpi-card" style="border-left-color:${k.color}">
+    <div class="kpi-icon">${k.icon}</div>
+    <div class="kpi-val" style="color:${k.color}">${k.val}</div>
+    <div class="kpi-label">${k.label}</div>
+  </div>`).join("");
+
+  // Top productos
+  const prods = {};
+  pedidos.forEach(p => (p.items||[]).forEach(i => {
+    const k = `${i.producto} ${i.presentacion}`;
+    if (!prods[k]) prods[k] = {nombre:k, qty:0, revenue:0, ganancia:0};
+    prods[k].qty += Number(i.qty);
+    prods[k].revenue += Number(i.precioFinal) * Number(i.qty);
+    prods[k].ganancia += (Number(i.precioFinal) - Number(i.costo)) * Number(i.qty);
+  }));
+  const top = Object.values(prods).sort((a,b) => b.revenue-a.revenue).slice(0,8);
+  document.getElementById("top-prods").innerHTML = top.length === 0
+    ? '<div style="color:var(--muted);font-size:13px">Sin datos aún.</div>'
+    : top.map((p,i) => `<div class="top-prod-row">
+        <span class="top-rank">#${i+1}</span>
+        <div class="top-info"><div class="top-name">${p.nombre}</div><div class="top-qty">${p.qty} unidades</div></div>
+        <div class="top-rev"><div class="top-rev-val">${fmt(p.revenue)}</div><div class="top-gan">+${fmt(p.ganancia)}</div></div>
+      </div>`).join("");
+
+  // Por forma de pago
+  const porPago = {};
+  pedidos.forEach(p => { porPago[p.formaPago] = (porPago[p.formaPago]||0) + Number(p.total); });
+  document.getElementById("chart-pago").innerHTML = Object.entries(porPago).sort((a,b)=>b[1]-a[1]).map(([f,m]) => {
+    const p = totalVentas > 0 ? (m/totalVentas)*100 : 0;
+    return `<div class="bar-row">
+      <div class="bar-label"><span style="font-weight:500">${f}</span><span><strong>${fmt(m)}</strong> <span style="color:var(--sage)">(${p.toFixed(0)}%)</span></span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${p}%"></div></div>
+    </div>`;
+  }).join("") || '<div style="color:var(--muted);font-size:13px">Sin datos.</div>';
+
+  // Semana
+  const ahora = Date.now();
+  const hace7 = ahora - 7*24*3600*1000;
+  const hace14 = ahora - 14*24*3600*1000;
+  const semAct = pedidos.filter(p => new Date(p.fecha).getTime() > hace7);
+  const semAnt = pedidos.filter(p => { const t = new Date(p.fecha).getTime(); return t > hace14 && t <= hace7; });
+  const vAct = semAct.reduce((s,p) => s+Number(p.total), 0);
+  const vAnt = semAnt.reduce((s,p) => s+Number(p.total), 0);
+  const vari = vAnt > 0 ? ((vAct-vAnt)/vAnt)*100 : 0;
+  document.getElementById("semana-stats").innerHTML = `
+    <div style="font-size:24px;font-weight:700;color:var(--forest)">${fmt(vAct)}</div>
+    <div style="font-size:12px;color:var(--muted)">${semAct.length} pedidos</div>
+    ${vAnt > 0 ? `<div style="font-size:12px;font-weight:600;color:${vari>=0?"#22c55e":"#dc2626"};margin-top:4px">${vari>=0?"▲":"▼"} ${Math.abs(vari).toFixed(1)}% vs semana anterior</div>` : ""}`;
+
+  // Tiers
+  const tierCount = {};
+  clientes.forEach(c => { const t = getTier(Number(c.totalPedidos)).name; tierCount[t] = (tierCount[t]||0)+1; });
+  document.getElementById("tier-stats").innerHTML = TIERS.map(t =>
+    `<div class="tier-row">
+      <span style="font-size:13px">${t.badge} ${t.name}</span>
+      <span class="tier-badge" style="background:${t.color}22;color:${t.color}">${tierCount[t.name]||0} clientes</span>
+    </div>`).join("");
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────
+function showToast(msg, tipo="ok") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.background = tipo === "error" ? "#dc2626" : tipo === "warn" ? "#f59e0b" : "#586844";
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3500);
+}
+</script>
+</body>
+</html>
