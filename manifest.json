@@ -1,0 +1,15 @@
+{
+  "name": "Natural Chill — Panel de Pedidos",
+  "short_name": "NaturalChill",
+  "start_url": "/naturalchill-dashboard/",
+  "display": "standalone",
+  "background_color": "#222824",
+  "theme_color": "#586844",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/emoji/192/seedling.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
