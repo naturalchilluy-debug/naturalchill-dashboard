@@ -341,8 +341,11 @@ async function cargarDatos(){
     if(rp.ok) pedidos=rp.pedidos||[];
     const rc=await apiCall("obtenerClientes");
     if(rc.ok) clientes=rc.clientes||[];
-    updateNavCounts();renderHistorial();renderClientes();renderDashboard();
-    showToast("✓ Sincronizado con Google Sheets");
+    updateNavCounts();
+    renderHistorial();
+    renderClientes();
+    renderDashboard();
+    showToast("✓ Sincronizado — "+pedidos.length+" pedidos, "+clientes.length+" clientes");
   }catch(e){
     showToast("Error: "+e.message,"error");
     console.error(e);
@@ -505,7 +508,7 @@ function renderHistorial(){
     const m=Number(p.margen);const mc=m>=0.5?"#22c55e":m>=0.35?"#f59e0b":"#dc2626";
     const fecha=new Date(p.fecha);const fs=isNaN(fecha)?String(p.fecha):fecha.toLocaleDateString("es-UY",{day:"2-digit",month:"short",year:"numeric"});
     const tags=(p.items||[]).map(i=>`<span class="pedido-tag">${i.qty}× ${i.producto} ${i.presentacion}</span>`).join("");
-    const wa=p.clienteTelefono?`<a class="wa-link" href="https://wa.me/598${p.clienteTelefono.replace(/\D/g,"")}" target="_blank">📱 WA</a>`:"";
+    const wa=p.clienteTelefono?`<a class="wa-link" href="https://wa.me/598${String(p.clienteTelefono||"").replace(/\D/g,"")}" target="_blank">📱 WA</a>`:"";
     return`<div class="pedido-card" style="border-left-color:${mc}">
       <div class="pedido-header">
         <div><span class="pedido-cliente">${p.clienteNombre}</span>${wa}<div class="pedido-fecha">${fs}</div></div>
@@ -539,7 +542,7 @@ function renderClientes(){
     const tier=getTier(Number(c.totalPedidos));
     const nt=TIERS[TIERS.indexOf(tier)+1];
     const pp=tier.max===99999?100:Math.min(((Number(c.totalPedidos)-tier.min)/(tier.max-tier.min+1))*100,100);
-    const wa=c.telefono?`<a class="wa-link" href="https://wa.me/598${c.telefono.replace(/\D/g,"")}" target="_blank">📱 ${c.telefono}</a>`:"";
+    const wa=c.telefono?`<a class="wa-link" href="https://wa.me/598${String(c.telefono||"").replace(/\D/g,"")}" target="_blank">📱 ${c.telefono}</a>`:"";
     return`<div class="cliente-card" style="border-left-color:${tier.color}">
       <div class="cliente-header">
         <div>
