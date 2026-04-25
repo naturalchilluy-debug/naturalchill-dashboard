@@ -523,7 +523,7 @@ function renderHistorial(){
     const m=Number(p.margen);const mc=m>=0.5?"#22c55e":m>=0.35?"#f59e0b":"#dc2626";
     const fecha=new Date(p.fecha);const fs=isNaN(fecha)?String(p.fecha):fecha.toLocaleDateString("es-UY",{day:"2-digit",month:"short",year:"numeric"});
     const tags=(p.items||[]).map(i=>`<span class="pedido-tag">${i.qty}× ${i.producto} ${i.presentacion}</span>`).join("");
-    const wa=p.clienteTelefono&&String(p.clienteTelefono).trim()?`<a class="wa-link" href="https://wa.me/598${String(p.clienteTelefono).replace(/\D/g,"")}" target="_blank">📱 WA</a>`:"";
+    const telP=String(p.clienteTelefono||"").trim();const wa=telP&&telP!="undefined"?`<a class="wa-link" href="https://wa.me/598${telP.replace(/[^0-9]/g,"")}" target="_blank">📱 WA</a>`:"";
     return`<div class="pedido-card" style="border-left-color:${mc}">
       <div class="pedido-header">
         <div><span class="pedido-cliente">${p.clienteNombre}</span>${wa}<div class="pedido-fecha">${fs}</div></div>
@@ -557,7 +557,7 @@ function renderClientes(){
     const tier=getTier(Number(c.totalPedidos));
     const nt=TIERS[TIERS.indexOf(tier)+1];
     const pp=tier.max===99999?100:Math.min(((Number(c.totalPedidos)-tier.min)/(tier.max-tier.min+1))*100,100);
-    const wa=c.telefono&&String(c.telefono).trim()?`<a class="wa-link" href="https://wa.me/598${String(c.telefono).replace(/\D/g,"")}" target="_blank">📱 ${String(c.telefono)}</a>`:"";
+    const telC=String(c.telefono||"").trim();const wa=telC&&telC!="undefined"?`<a class="wa-link" href="https://wa.me/598${telC.replace(/[^0-9]/g,"")}" target="_blank">📱 ${telC}</a>`:"";
     return`<div class="cliente-card" style="border-left-color:${tier.color}">
       <div class="cliente-header">
         <div>
