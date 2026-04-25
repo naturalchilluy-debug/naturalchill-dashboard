@@ -117,6 +117,17 @@ textarea{resize:vertical;min-height:56px}
 .divider{height:1px;background:var(--border);margin:10px 0}
 @media(max-width:768px){.pedido-layout{grid-template-columns:1fr}.summary-panel{position:static}.dash-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.prod-search-row{flex-direction:column}.prod-search-row select{width:100%}}
 </style>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#586844"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="NaturalChill"/>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
 </head>
 <body>
 <div class="header">
